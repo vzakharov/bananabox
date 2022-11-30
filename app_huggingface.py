@@ -7,41 +7,28 @@ import torch as t
 from transformers import JukeboxModel , JukeboxTokenizer
 from transformers.models.jukebox import convert_jukebox
 
+model_id = 'openai/jukebox-1b-lyrics' #@param ['openai/jukebox-1b-lyrics', 'openai/jukebox-5b-lyrics']
+sample_rate = 44100
+total_duration_in_seconds = 200
+raw_to_tokens = 128
+chunk_size = 32
+max_batch_size = 16
+
 if not 'google.colab' in sys.modules:
 
   import download as dl
   cache_path = dl.cache_path
 
-else:
-
-  # Monkey patch convert_jukebox.convert_openai_checkpoint:
-  # def convert_openai_checkpoint(model_name=None, pytorch_dump_folder_path=None)
-  # to use the cache_path instead of the default download path (pytorch_dump_folder_path)
-  # (Avoid patching twice)
-  try:
-    patched_convert_openai_checkpoint
-    # (If the above line doesn't throw an error, then the function has already been patched)
-    print("convert_openai_checkpoint already patched")
-  except NameError:
-    original_convert_openai_checkpoint = convert_jukebox.convert_openai_checkpoint
-
-    def patched_convert_openai_checkpoint(model_name=None, pytorch_dump_folder_path=None):
-      print(f"Using cache path: {cache_path}")
-      return original_convert_openai_checkpoint(model_name, cache_path)
-
-    convert_jukebox.convert_openai_checkpoint = patched_convert_openai_checkpoint
-    print("convert_openai_checkpoint patched")
-
 def tokens_to_seconds(tokens, level = 2):
 
-  global hps, raw_to_tokens
-  return tokens * raw_to_tokens / hps.sr / 4 ** (2 - level)
+  global sample_rate, raw_to_tokens
+  return tokens * raw_to_tokens / sample_rate / 4 ** (2 - level)
 
 def seconds_to_tokens(sec, level = 2):
 
-  global hps, raw_to_tokens, chunk_size
+  global sample_rate, raw_to_tokens, chunk_size
 
-  tokens = sec * hps.sr // raw_to_tokens
+  tokens = sec * sample_rate // raw_to_tokens
   tokens = ( (tokens // chunk_size) + 1 ) * chunk_size
 
   # For levels 1 and 0, multiply by 4 and 16 respectively
@@ -55,7 +42,14 @@ def init():
   global model
 
   print("Loading model...")
-  model = JukeboxModel.from_pretrained('openai/jukebox-5b-lyrics', device_map="auto", torch_dtype=t.float16).eval()
+  model = JukeboxModel.from_pretrained(
+    model_id,
+    device_map = "auto",
+    torch_dtype = t.float16,
+    cache_dir = f"{cache_path}/jukebox/models",
+    resume_download = True,
+    min_duration = 0
+  ).eval()
   print("Model loaded: ", model)
 
 # Inference is ran for every server call
@@ -65,27 +59,27 @@ def inference(model_inputs:dict) -> dict:
 
   print(f"Received inputs: {model_inputs}")
   
+  n_samples = 4
+  generation_length = seconds_to_tokens(1)
+  offset = 0
+  level = 0
+
+  model.total_length = seconds_to_tokens(total_duration_in_seconds)
+
   sampling_kwargs = dict(
-    n_samples = 4,
     temp = 0.98,
-    sample_length_in_seconds = 200,
-    sample_tokens = seconds_to_tokens(1),
-    chunk_size = 32,
-    max_batch_size = 16,
-    fp16 = True,
+    chunk_size = chunk_size,
   )
 
-  metas = { 
-    **model_inputs,
-    **dict(
-      total_length =  hps.sample_length,
-      offset = 0,
-    )
-  }
+  metas = model_inputs
 
-  labels = JukeboxTokenizer.from_pretrained('openai/jukebox-5b-lyrics')(**metas)['input_ids']
+  labels = JukeboxTokenizer.from_pretrained(model_id)(**metas)['input_ids'][level].cuda().repeat(n_samples, 1)
 
-  zs =  model.ancestral_sample(labels, **sampling_kwargs)
+  zs = [ t.zeros(n_samples, 0, dtype=t.long, device='cuda') for _ in range(3) ]
+
+  zs = model.sample_partial_window(
+    zs, labels, offset, sampling_kwargs, level = 0, tokens_to_sample = generation_length, max_batch_size = max_batch_size
+  )
 
   print(f"Generated {len(zs)} samples: {zs}")
 

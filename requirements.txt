@@ -2,7 +2,9 @@
 flask
 
 # Model-specific
-# git+https://github.com/ArthurZucker/transformers.git@jukebox
-git+https://github.com/openai/jukebox.git
-torch>=1.7.0
-numpy
+git+https://github.com/ArthurZucker/transformers.git@jukebox
+accelerate
+bitsandbytes==0.31.8
+# git+https://github.com/openai/jukebox.git
+# torch>=1.7.0
+# numpy
