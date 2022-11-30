@@ -6,7 +6,7 @@
 default_model_inputs = dict(
 
   artist = "Metallica",
-  genres = "Metal",
+  genre = "Metal",
   lyrics = """Say your prayers little one
 Don't forget my son
 To include everyone
