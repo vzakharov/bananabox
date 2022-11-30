@@ -1,3 +1,5 @@
+#@title Start the server
+
 # Do not edit if deploying to Banana Serverless
 # This file is boilerplate for the http server, and follows a strict interface.
 
@@ -5,7 +7,11 @@
 
 from sanic import Sanic, response
 import subprocess
-import app as user_src
+
+import sys
+if not 'google.colab' in sys.modules:
+  import app as user_src
+  # (If testing with colab, user_src is defined in the cell above)
 
 # We do the model load-to-GPU step on server startup
 # so the model object is available globally for reuse
@@ -17,26 +23,26 @@ server = Sanic("my_app")
 # Healthchecks verify that the environment is correct on Banana Serverless
 @server.route('/healthcheck', methods=["GET"])
 def healthcheck(request):
-    # dependency free way to check if GPU is visible
-    gpu = False
-    out = subprocess.run("nvidia-smi", shell=True)
-    if out.returncode == 0: # success state on shell command
-        gpu = True
+  # dependency free way to check if GPU is visible
+  gpu = False
+  out = subprocess.run("nvidia-smi", shell=True)
+  if out.returncode == 0: # success state on shell command
+    gpu = True
 
-    return response.json({"state": "healthy", "gpu": gpu})
+  return response.json({"state": "healthy", "gpu": gpu})
 
 # Inference POST handler at '/' is called for every http call from Banana
 @server.route('/', methods=["POST"]) 
 def inference(request):
-    try:
-        model_inputs = response.json.loads(request.json)
-    except:
-        model_inputs = request.json
+  try:
+    model_inputs = response.json.loads(request.json)
+  except:
+    model_inputs = request.json
 
-    output = user_src.inference(model_inputs)
+  output = user_src.inference(model_inputs)
 
-    return response.json(output)
+  return response.json(output)
 
 
 if __name__ == '__main__':
-    server.run(host='0.0.0.0', port=8000, workers=1)
+  server.run(host='localhost', port=8000, workers=1)

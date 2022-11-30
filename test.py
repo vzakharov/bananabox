@@ -12,6 +12,6 @@ model_inputs = dict(
 )
 
 
-res = requests.post('http://localhost:8000/', json = model_inputs)
+res = requests.post('http://4cc1-34-124-241-217.ngrok.io/', json = model_inputs)
 
 print(res.json())

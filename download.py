@@ -1,23 +1,47 @@
 # In this file, we define download_model
 # It runs during container build time to get model weights built into the container
 
+#@title Download model weights
+# (We'll use Colab syntax in case we're testing in Colab)
+
+testing_with_colab = True
+# (Depending on this, we'll either download the model weights locally or to a mounted Google Drive)
+
 import os
 import subprocess
 import time
 
+cache_path = None
 
 def download_model():
 
-  # Download the following models from https://openaipublic.azureedge.net/jukebox/models/ :
+  global cache_path
+
+  remote_base = 'https://openaipublic.azureedge.net/jukebox/models/'
+
+  if testing_with_colab:
+
+    cache_path = '/content/drive/My Drive/jukebox-webui/_data/'
+    # Connect to your Google Drive
+    from google.colab import drive
+    drive.mount('/content/drive')
+
+  else:
+    cache_path = '~/.cache/'
+
+  # Expand the ~ if it's there
+  if cache_path.startswith('~'):
+    cache_path = os.path.expanduser(cache_path)
+
+  # Download the following models from the remote_base to the cache_path
   # - 5b/vqvae.pth.tar
   # - 5b/prior_level_0.pth.tar
   # - 5b/prior_level_1.pth.tar
   # - 5b_lyrics/prior_level_2.pth.tar
-  # To ~/.cache/jukebox/models
 
   for path in ['5b/vqvae.pth.tar', '5b/prior_level_0.pth.tar', '5b/prior_level_1.pth.tar', '5b_lyrics/prior_level_2.pth.tar']:
-    remote_path = 'https://openaipublic.azureedge.net/jukebox/models/' + path
-    local_path = os.path.expanduser('~/.cache/jukebox/models/' + path)
+    remote_path = remote_base + path
+    local_path = cache_path + 'jukebox/models/' + path
     os.makedirs(os.path.dirname(local_path), exist_ok=True)
     if not os.path.exists(local_path):
       print(f'Downloading {remote_path} to {local_path}')
