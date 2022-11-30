@@ -1,7 +1,8 @@
+# Basic, needed for the server to run
+flask
+
+# Model-specific
 # git+https://github.com/ArthurZucker/transformers.git@jukebox
 git+https://github.com/openai/jukebox.git
-sanic==22.6.2
-bitsandbytes==0.31.8
 torch>=1.7.0
-transformers
-accelerate
+numpy

@@ -4,12 +4,14 @@
 #@title Download model weights
 # (We'll use Colab syntax in case we're testing in Colab)
 
-testing_with_colab = True
-# (Depending on this, we'll either download the model weights locally or to a mounted Google Drive)
-
 import os
 import subprocess
+import sys
 import time
+
+testing_with_colab = 'google.colab' in sys.modules
+# (Depending on this, we'll either download the model weights locally or to a mounted Google Drive)
+
 
 cache_path = None
 
