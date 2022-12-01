@@ -14,10 +14,16 @@ raw_to_tokens = 128
 chunk_size = 32
 max_batch_size = 16
 
-if not 'google.colab' in sys.modules:
+if 'google.colab' in sys.modules:
 
-  import download as dl
-  cache_path = dl.cache_path
+  cache_path = '/content/drive/My Drive/jukebox-webui/_data/' #@param {type:"string"}
+  # Connect to your Google Drive
+  from google.colab import drive
+  drive.mount('/content/drive')
+
+else:
+
+  cache_path = '~/.cache/'
 
 def tokens_to_seconds(tokens, level = 2):
 
@@ -41,7 +47,7 @@ def seconds_to_tokens(sec, level = 2):
 def init():
   global model
 
-  print("Loading model...")
+  print(f"Loading model from/to {cache_path}...")
   model = JukeboxModel.from_pretrained(
     model_id,
     device_map = "auto",
