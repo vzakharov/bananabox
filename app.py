@@ -7,7 +7,7 @@ import torch as t
 from transformers import JukeboxModel , JukeboxTokenizer
 from transformers.models.jukebox import convert_jukebox
 
-model_id = 'openai/jukebox-1b-lyrics' #@param ['openai/jukebox-1b-lyrics', 'openai/jukebox-5b-lyrics']
+model_id = 'openai/jukebox-5b-lyrics' #@param ['openai/jukebox-1b-lyrics', 'openai/jukebox-5b-lyrics']
 sample_rate = 44100
 total_duration_in_seconds = 200
 raw_to_tokens = 128
