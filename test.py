@@ -37,11 +37,13 @@ import json
 import os
 import requests
 import sys
+import time
 
 def test_inference(model_inputs={}):
 
   meta_args = {}
   meta_keys = ['env', 'api_key', 'model_key']
+  start = time.time()
 
   # If no model_inputs are provided, either use the ones from command line (if any) or the default ones
   if model_inputs == {}:
@@ -121,6 +123,7 @@ def test_inference(model_inputs={}):
       res = requests.post(url, json=model_inputs)
 
   print(f"Response: {res}")
+  print(f"Time taken: {time.time() - start}")
 
   return res
 
