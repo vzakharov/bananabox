@@ -7,7 +7,7 @@ import torch as t
 from transformers import JukeboxModel , JukeboxTokenizer
 from transformers.models.jukebox import convert_jukebox
 
-model_id = 'openai/jukebox-5b-lyrics' #@param ['openai/jukebox-1b-lyrics', 'openai/jukebox-5b-lyrics']
+model_id = 'openai/jukebox-1b-lyrics' #@param ['openai/jukebox-1b-lyrics', 'openai/jukebox-5b-lyrics']
 sample_rate = 44100
 total_duration_in_seconds = 200
 raw_to_tokens = 128
@@ -78,7 +78,7 @@ def inference(model_inputs:dict) -> dict:
   zs = [ t.zeros(n_samples, 0, dtype=t.long, device='cuda') for _ in range(3) ]
 
   zs = model.sample_partial_window(
-    zs, labels, offset, sampling_kwargs, level = 0, tokens_to_sample = generation_length, max_batch_size = max_batch_size
+    zs, labels, offset, sampling_kwargs, level = level, tokens_to_sample = generation_length, max_batch_size = max_batch_size
   )
 
   print(f"Generated {len(zs)} samples: {zs}")
